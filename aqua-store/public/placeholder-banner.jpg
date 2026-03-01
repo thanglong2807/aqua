@@ -1,0 +1,12 @@
+// This is a placeholder image.
+// You should replace this with a real image for your banner.
+// For example, you can find free images on sites like Unsplash or Pexels.
+// To use it, place the image file in the `public` directory of your project.
+// For instance, if you have `public/banner.jpg`, the `src` in the Image component would be `/banner.jpg`.
+// I'm creating a gray placeholder for now.
+
+const PlaceholderBanner = () => (
+    <div style={{ width: '100%', height: '100%', backgroundColor: '#cccccc' }} />
+);
+
+export default PlaceholderBanner;
