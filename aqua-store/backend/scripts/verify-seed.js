@@ -15,11 +15,11 @@ async function main() {
     ['san_phams_danh_muc_lnk', 'select count(*)::int as c from san_phams_danh_muc_lnk'],
     [
       'files_related_mph products',
-      "select count(*)::int as c from files_related_mph where related_type='api::san-pham.san-pham' and field='anh_dai_dien'",
+      "select count(*)::int as c from files_related_mph where related_type='api::san-pham.san-pham' and field='AnhDaiDien'",
     ],
     [
       'files_related_mph categories',
-      "select count(*)::int as c from files_related_mph where related_type='api::danh-muc.danh-muc' and field='hinh_anh'",
+      "select count(*)::int as c from files_related_mph where related_type='api::danh-muc.danh-muc' and field='HinhAnh'",
     ],
   ];
 

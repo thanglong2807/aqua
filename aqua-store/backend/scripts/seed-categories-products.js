@@ -112,7 +112,7 @@ async function seed() {
         await client.query(
           `insert into files_related_mph (file_id, related_id, related_type, field, "order")
            values ($1, $2, $3, $4, $5)`,
-          [categoryFileId, categoryId, 'api::danh-muc.danh-muc', 'hinh_anh', 0]
+          [categoryFileId, categoryId, 'api::danh-muc.danh-muc', 'HinhAnh', 0]
         );
       }
     }
@@ -170,7 +170,7 @@ async function seed() {
           await client.query(
             `insert into files_related_mph (file_id, related_id, related_type, field, "order")
              values ($1, $2, $3, $4, $5)`,
-            [coverFileId, productId, 'api::san-pham.san-pham', 'anh_dai_dien', 0]
+            [coverFileId, productId, 'api::san-pham.san-pham', 'AnhDaiDien', 0]
           );
         }
       }
