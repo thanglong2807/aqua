@@ -2,6 +2,7 @@
 import { fetchAPI, getStrapiMedia } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
+import Pagination from '@/components/common/Pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,19 +12,35 @@ const AllCategoriesPage = async ({
   searchParams: Promise<{ page?: string }>;
 }) => {
   const { page = '1' } = await searchParams;
-  const currentPage = Number.isNaN(Number(page)) ? 1 : Math.max(1, Number(page));
+  const requestedPage = Number.isNaN(Number(page)) ? 1 : Math.max(1, Number(page));
   const pageSize = 9;
 
-  const categoriesRes = await fetchAPI('/danh-mucs', {
+  const firstResponse = await fetchAPI('/danh-mucs', {
     populate: { HinhAnh: { populate: '*' } },
     sort: 'createdAt:desc',
     pagination: {
-      page: currentPage,
+      page: requestedPage,
       pageSize,
     },
   });
+  const firstPagination = firstResponse?.meta?.pagination;
+  const firstPageCount = Math.max(1, firstPagination?.pageCount || 1);
+  const currentPage = Math.min(requestedPage, firstPageCount);
+
+  const categoriesRes =
+    requestedPage === currentPage
+      ? firstResponse
+      : await fetchAPI('/danh-mucs', {
+          populate: { HinhAnh: { populate: '*' } },
+          sort: 'createdAt:desc',
+          pagination: {
+            page: currentPage,
+            pageSize,
+          },
+        });
+
   const categories = categoriesRes?.data || [];
-  const pagination = categoriesRes?.meta?.pagination;
+  const pagination = categoriesRes?.meta?.pagination || firstPagination;
   const pageCount = Math.max(1, pagination?.pageCount || 1);
 
   const createPageHref = (targetPage: number) => `/danh-muc?page=${targetPage}`;
@@ -60,45 +77,12 @@ const AllCategoriesPage = async ({
           )})}
         </div>
 
-        {pageCount > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">
-            <Link
-              href={createPageHref(Math.max(1, currentPage - 1))}
-              className={`px-4 py-2 rounded-xl border transition ${
-                currentPage <= 1
-                  ? 'pointer-events-none opacity-50 bg-gray-100 text-gray-400 border-gray-200'
-                  : 'bg-white hover:bg-gray-50 border-gray-200'
-              }`}
-            >
-              Trước
-            </Link>
-
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
-              <Link
-                key={pageNumber}
-                href={createPageHref(pageNumber)}
-                className={`px-4 py-2 rounded-xl border transition ${
-                  pageNumber === currentPage
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white hover:bg-gray-50 border-gray-200'
-                }`}
-              >
-                {pageNumber}
-              </Link>
-            ))}
-
-            <Link
-              href={createPageHref(Math.min(pageCount, currentPage + 1))}
-              className={`px-4 py-2 rounded-xl border transition ${
-                currentPage >= pageCount
-                  ? 'pointer-events-none opacity-50 bg-gray-100 text-gray-400 border-gray-200'
-                  : 'bg-white hover:bg-gray-50 border-gray-200'
-              }`}
-            >
-              Sau
-            </Link>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          pageCount={pageCount}
+          createPageHref={createPageHref}
+          className="mt-10"
+        />
       </div>
     </div>
   );

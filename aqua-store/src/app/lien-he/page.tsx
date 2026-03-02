@@ -87,7 +87,7 @@ const ContactPage = () => {
             </div>
           <div className="w-full h-96 rounded-xl overflow-hidden shadow-lg">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.447176330394!2d106.70204331474939!3d10.77701399232076!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f49a6a9b6f1%3A0x3a6b7a0b5b5b5b5b!2sBitexco%20Financial%20Tower!5e0!3m2!1sen!2svn!4v1677654321098"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d646.2499054265593!2d105.6961390827217!3d20.919904190931305!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31344dfb154d2869%3A0xc771c41746ca8da0!2zQ2jDumMgTMO9LCBOZ-G7jWMgSMOyYSwgQ2jGsMahbmcgTeG7uSwgSMOgIE7hu5lpLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1772422532711!5m2!1svi!2s"
               width="100%"
               height="100%"
               style={{ border: 0 }}

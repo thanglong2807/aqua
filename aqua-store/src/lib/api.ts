@@ -45,7 +45,7 @@ export async function fetchAPI(path: string, urlParamsObject = {}, options = {})
       console.error("Fetch API Error:", response.status, response.statusText);
       const errorBody = await response.text();
       console.error("Error Body:", errorBody);
-      throw new Error(`An error occurred please try again`);
+      return { data: [] };
     }
     const data = await response.json();
 
@@ -54,7 +54,7 @@ export async function fetchAPI(path: string, urlParamsObject = {}, options = {})
     return data;
   } catch (error) {
     console.error(error);
-    throw new Error(`An error occurred please try again`);
+    return { data: [] };
   }
 }
 

@@ -1,6 +1,8 @@
 // This file is now using dynamic data from Strapi
 import { fetchAPI, formatPrice, getStrapiMedia } from '@/lib/api';
 import { siteConfig } from '@/lib/siteConfig';
+import Pagination from '@/components/common/Pagination';
+import AutoFilterSelect from '@/components/common/AutoFilterSelect';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -8,14 +10,19 @@ export const dynamic = 'force-dynamic';
 
 // Generate static paths for each category
 export async function generateStaticParams() {
-  const categoriesRes = await fetchAPI('/danh-mucs');
-  return categoriesRes.data.map((category: any) => ({
-    slug: category.Slug,
-  }));
+  try {
+    const categoriesRes = await fetchAPI('/danh-mucs');
+    return (categoriesRes?.data || []).map((category: any) => ({
+      slug: category.Slug,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // Fetch data for a specific category
 async function getCategoryData(slug: string) {
+  try {
     const categoriesRes = await fetchAPI('/danh-mucs', {
         filters: { Slug: { $eq: slug } },
         populate: {
@@ -29,6 +36,9 @@ async function getCategoryData(slug: string) {
         }
     });
     return categoriesRes.data[0];
+  } catch {
+    return null;
+  }
 }
 
 function toNumericPrice(value: string | number | null | undefined): number {
@@ -109,8 +119,7 @@ const ProductCategoryPage = async ({
     </h1>
 
     {/* ===== FILTER ===== */}
-    <form 
-      method="GET" 
+    <div 
       className="mb-10 flex flex-col md:flex-row md:items-center gap-4 
                  p-6 bg-white rounded-2xl border border-gray-100 
                  shadow-sm"
@@ -119,31 +128,23 @@ const ProductCategoryPage = async ({
         Sắp xếp sản phẩm
       </label>
 
-      <select 
-        name="sort" 
-        defaultValue={sort}
+      <AutoFilterSelect
+        name="sort"
+        value={sort}
+        defaultValueToOmit="newest"
+        options={[
+          { value: 'newest', label: 'Mặc định' },
+          { value: 'name_asc', label: 'Tên A-Z' },
+          { value: 'gia_asc', label: 'Giá tăng dần' },
+          { value: 'gia_desc', label: 'Giá giảm dần' },
+        ]}
         className="md:min-w-64 border border-gray-200 rounded-xl 
                    px-4 py-2 bg-gray-50 
                    focus:outline-none focus:ring-2 focus:ring-emerald-400 
                    transition"
-      >
-        <option value="newest">Mặc định</option>
-        <option value="name_asc">Tên A-Z</option>
-        <option value="gia_asc">Giá tăng dần</option>
-        <option value="gia_desc">Giá giảm dần</option>
-      </select>
+      />
 
       <div className="flex gap-3 md:ml-auto">
-        <button 
-          type="submit" 
-          className="px-6 py-2.5 bg-emerald-600 text-white 
-                     rounded-xl font-medium 
-                     hover:bg-emerald-700 active:scale-95 
-                     transition-all duration-200"
-        >
-          Áp dụng
-        </button>
-
         <Link 
           href={`/danh-muc/${slug}`} 
           className="px-6 py-2.5 border border-gray-200 
@@ -154,7 +155,7 @@ const ProductCategoryPage = async ({
           Xóa lọc
         </Link>
       </div>
-    </form>
+    </div>
 
     {/* ===== SỐ LƯỢNG ===== */}
     <p className="text-sm text-gray-600 mb-6">
@@ -243,45 +244,12 @@ const ProductCategoryPage = async ({
       </div>
     )}
 
-    {pageCount > 1 && (
-      <div className="mt-12 flex items-center justify-center gap-2 flex-wrap">
-        <Link
-          href={createPageHref(Math.max(1, normalizedPage - 1))}
-          className={`px-4 py-2 rounded-xl border transition ${
-            normalizedPage <= 1
-              ? 'pointer-events-none opacity-50 bg-gray-100 text-gray-400 border-gray-200'
-              : 'bg-white hover:bg-gray-50 border-gray-200'
-          }`}
-        >
-          Trước
-        </Link>
-
-        {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
-          <Link
-            key={pageNumber}
-            href={createPageHref(pageNumber)}
-            className={`px-4 py-2 rounded-xl border transition ${
-              pageNumber === normalizedPage
-                ? 'bg-emerald-600 text-white border-emerald-600'
-                : 'bg-white hover:bg-gray-50 border-gray-200'
-            }`}
-          >
-            {pageNumber}
-          </Link>
-        ))}
-
-        <Link
-          href={createPageHref(Math.min(pageCount, normalizedPage + 1))}
-          className={`px-4 py-2 rounded-xl border transition ${
-            normalizedPage >= pageCount
-              ? 'pointer-events-none opacity-50 bg-gray-100 text-gray-400 border-gray-200'
-              : 'bg-white hover:bg-gray-50 border-gray-200'
-          }`}
-        >
-          Sau
-        </Link>
-      </div>
-    )}
+    <Pagination
+      currentPage={normalizedPage}
+      pageCount={pageCount}
+      createPageHref={createPageHref}
+      className="mt-10"
+    />
 
   </div>
 </div>

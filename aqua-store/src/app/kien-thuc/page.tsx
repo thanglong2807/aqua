@@ -2,6 +2,8 @@
 import { fetchAPI, getStrapiMedia } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
+import Pagination from '@/components/common/Pagination';
+import AutoFilterSelect from '@/components/common/AutoFilterSelect';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,22 +13,42 @@ const BlogPage = async ({
   searchParams: Promise<{ sort?: string; page?: string }>;
 }) => {
   const { sort = 'date_desc', page = '1' } = await searchParams;
-  const currentPage = Number.isNaN(Number(page)) ? 1 : Math.max(1, Number(page));
+  const requestedPage = Number.isNaN(Number(page)) ? 1 : Math.max(1, Number(page));
   const pageSize = 9;
 
-  const query: any = {
+  const baseQuery: any = {
     populate: { HinhDaiDien: { populate: '*' } },
     sort: sort === 'date_asc' ? 'NgayDang:asc' : 'NgayDang:desc',
-    pagination: {
-      page: currentPage,
-      pageSize,
-    },
+    pagination: { pageSize },
   };
 
-  const postsRes = await fetchAPI('/bai-viets', query);
+  const firstResponse = await fetchAPI('/bai-viets', {
+    ...baseQuery,
+    pagination: {
+      ...baseQuery.pagination,
+      page: requestedPage,
+    },
+  });
+
+  const firstPagination = firstResponse?.meta?.pagination;
+  const firstPageCount = Math.max(1, firstPagination?.pageCount || 1);
+  const currentPage = Math.min(requestedPage, firstPageCount);
+
+  const postsRes =
+    requestedPage === currentPage
+      ? firstResponse
+      : await fetchAPI('/bai-viets', {
+          ...baseQuery,
+          pagination: {
+            ...baseQuery.pagination,
+            page: currentPage,
+          },
+        });
+
   const posts = postsRes?.data || [];
-  const pagination = postsRes?.meta?.pagination;
+  const pagination = postsRes?.meta?.pagination || firstPagination;
   const pageCount = Math.max(1, pagination?.pageCount || 1);
+  const totalPosts = pagination?.total || 0;
 
   const createPageHref = (targetPage: number) => {
     const params = new URLSearchParams();
@@ -44,24 +66,27 @@ const BlogPage = async ({
           Kiến Thức Thủy Sinh
         </h1>
 
-        <form method="GET" className="mb-8 flex flex-col md:flex-row gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="mb-8 flex flex-col md:flex-row gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <label className="text-sm font-semibold text-gray-700 md:self-center">Sắp xếp bài viết</label>
-          <select name="sort" defaultValue={sort} className="md:min-w-64 border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-            <option value="date_desc">Mới nhất</option>
-            <option value="date_asc">Cũ nhất</option>
-          </select>
+          <AutoFilterSelect
+            name="sort"
+            value={sort}
+            defaultValueToOmit="date_desc"
+            options={[
+              { value: 'date_desc', label: 'Mới nhất' },
+              { value: 'date_asc', label: 'Cũ nhất' },
+            ]}
+            className="md:min-w-64 border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+          />
           <div className="flex gap-3 md:ml-auto">
-            <button type="submit" className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 active:scale-95 transition-all duration-200">
-              Áp dụng
-            </button>
             <Link href="/kien-thuc" className="px-6 py-2.5 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 active:scale-95 transition-all duration-200">
               Xóa lọc
             </Link>
           </div>
-        </form>
+        </div>
 
         <p className="text-sm text-gray-600 mb-6">
-          Tìm thấy <span className="font-semibold text-emerald-600">{posts.length}</span> bài viết
+          Tìm thấy <span className="font-semibold text-emerald-600">{totalPosts}</span> bài viết
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -101,49 +126,12 @@ const BlogPage = async ({
           <div className="mt-10 text-center text-gray-500">Không có bài viết phù hợp bộ lọc.</div>
         )}
 
-        {pageCount > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">
-            <Link
-              href={createPageHref(Math.max(1, currentPage - 1))}
-              className={`px-4 py-2 rounded-xl border transition ${
-                currentPage <= 1
-                  ? 'pointer-events-none opacity-50 bg-gray-100 text-gray-400 border-gray-200'
-                  : 'bg-white hover:bg-gray-50 border-gray-200'
-              }`}
-            >
-              Trước
-            </Link>
-
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
-              <Link
-                key={pageNumber}
-                href={createPageHref(pageNumber)}
-                className={`px-4 py-2 rounded-xl border transition ${
-                  pageNumber === currentPage
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white hover:bg-gray-50 border-gray-200'
-                }`}
-              >
-                {pageNumber}
-              </Link>
-            ))}
-
-            <Link
-              href={createPageHref(Math.min(pageCount, currentPage + 1))}
-              className={`px-4 py-2 rounded-xl border transition ${
-                currentPage >= pageCount
-                  ? 'pointer-events-none opacity-50 bg-gray-100 text-gray-400 border-gray-200'
-                  : 'bg-white hover:bg-gray-50 border-gray-200'
-              }`}
-            >
-              Sau
-            </Link>
-          </div>
-        )}
-
-        <div className="mt-16 text-center text-gray-500">
-          Phân trang sẽ được thêm vào đây.
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          pageCount={pageCount}
+          createPageHref={createPageHref}
+          className="mt-10"
+        />
       </div>
     </div>
   );

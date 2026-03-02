@@ -6,13 +6,18 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 
 export async function generateStaticParams() {
-  const productsRes = await fetchAPI('/san-phams');
-  return productsRes.data.map((product: any) => ({
-    slug: product.Slug,
-  }));
+  try {
+    const productsRes = await fetchAPI('/san-phams');
+    return (productsRes?.data || []).map((product: any) => ({
+      slug: product.Slug,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 async function getProductData(slug: string) {
+  try {
     const productsRes = await fetchAPI('/san-phams', {
         filters: { Slug: { $eq: slug } },
         populate: {
@@ -22,34 +27,41 @@ async function getProductData(slug: string) {
         }
     });
     return productsRes.data[0];
+  } catch {
+    return null;
+  }
 }
 
 async function getRelatedProducts(productId: number, categoryId?: number) {
-  const relatedRes = await fetchAPI('/san-phams', {
-    filters: {
-      ...(categoryId ? { danh_muc: { id: { $eq: categoryId } } } : {}),
-      id: { $ne: productId },
-    },
-    populate: {
-      AnhDaiDien: { populate: '*' },
-    },
-    sort: 'createdAt:desc',
-    pagination: { limit: 4 },
-  });
+  try {
+    const relatedRes = await fetchAPI('/san-phams', {
+      filters: {
+        ...(categoryId ? { danh_muc: { id: { $eq: categoryId } } } : {}),
+        id: { $ne: productId },
+      },
+      populate: {
+        AnhDaiDien: { populate: '*' },
+      },
+      sort: 'createdAt:desc',
+      pagination: { limit: 4 },
+    });
 
-  const related = relatedRes?.data || [];
-  if (related.length > 0) return related;
+    const related = relatedRes?.data || [];
+    if (related.length > 0) return related;
 
-  const fallbackRes = await fetchAPI('/san-phams', {
-    filters: { id: { $ne: productId } },
-    populate: {
-      AnhDaiDien: { populate: '*' },
-    },
-    sort: 'createdAt:desc',
-    pagination: { limit: 4 },
-  });
+    const fallbackRes = await fetchAPI('/san-phams', {
+      filters: { id: { $ne: productId } },
+      populate: {
+        AnhDaiDien: { populate: '*' },
+      },
+      sort: 'createdAt:desc',
+      pagination: { limit: 4 },
+    });
 
-  return fallbackRes?.data || [];
+    return fallbackRes?.data || [];
+  } catch {
+    return [];
+  }
 }
 
 function extractBlockText(children: any[] = []): string {

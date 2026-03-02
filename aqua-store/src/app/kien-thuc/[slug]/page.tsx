@@ -6,28 +6,40 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
-  const postsRes = await fetchAPI('/bai-viets');
-  return (postsRes?.data || []).map((post: any) => ({
-    slug: post.Slug,
-  }));
+  try {
+    const postsRes = await fetchAPI('/bai-viets');
+    return (postsRes?.data || []).map((post: any) => ({
+      slug: post.Slug,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 async function getPostData(slug: string) {
-  const postRes = await fetchAPI('/bai-viets', {
-    filters: { Slug: { $eq: slug } },
-    populate: { HinhDaiDien: { populate: '*' } },
-  });
-  return postRes?.data?.[0] || null;
+  try {
+    const postRes = await fetchAPI('/bai-viets', {
+      filters: { Slug: { $eq: slug } },
+      populate: { HinhDaiDien: { populate: '*' } },
+    });
+    return postRes?.data?.[0] || null;
+  } catch {
+    return null;
+  }
 }
 
 async function getRelatedPosts(postId: number) {
-  const postsRes = await fetchAPI('/bai-viets', {
-    populate: { HinhDaiDien: { populate: '*' } },
-    sort: 'NgayDang:desc',
-    pagination: { limit: 4 },
-  });
-  const posts = postsRes?.data || [];
-  return posts.filter((item: any) => item.id !== postId).slice(0, 3);
+  try {
+    const postsRes = await fetchAPI('/bai-viets', {
+      populate: { HinhDaiDien: { populate: '*' } },
+      sort: 'NgayDang:desc',
+      pagination: { limit: 4 },
+    });
+    const posts = postsRes?.data || [];
+    return posts.filter((item: any) => item.id !== postId).slice(0, 3);
+  } catch {
+    return [];
+  }
 }
 
 function extractBlockText(children: any[] = []) {
